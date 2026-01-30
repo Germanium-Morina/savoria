@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use App\Http\Requests\AuthRegisterRequest;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +24,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token], 201);
+        return response()->json(['user' => new UserResource($user), 'token' => $token], 201);
     }
 
     public function login(Request $request)
@@ -40,7 +41,7 @@ class AuthController extends Controller
         $user = Auth::user();
         $token = $user->createToken('api-token')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token]);
+        return response()->json(['user' => new UserResource($user), 'token' => $token]);
     }
 
     public function logout(Request $request)

@@ -7,17 +7,15 @@ use App\Services\Contracts\MenuServiceInterface;
 
 class MenuService implements MenuServiceInterface
 {
-    public function getFeaturedItems(): array
+    public function getFeaturedItems()
     {
-        $items = MenuItem::where('is_featured', true)
+        return MenuItem::where('is_featured', true)
             ->where('is_available', true)
             ->orderBy('display_order')
             ->get();
-
-        return $items->toArray();
     }
 
-    public function listByCategory(int $categoryId = null): array
+    public function listByCategory(int $categoryId = null)
     {
         $query = MenuItem::query()->where('is_available', true)->orderBy('display_order');
 
@@ -25,6 +23,6 @@ class MenuService implements MenuServiceInterface
             $query->where('category_id', $categoryId);
         }
 
-        return $query->get()->toArray();
+        return $query->get();
     }
 }

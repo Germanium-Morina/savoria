@@ -4,9 +4,22 @@ namespace App\Services\Contracts;
 
 interface ReservationServiceInterface
 {
-    public function listForUser(int $userId): array;
+    /**
+     * Return reservations for a user as Eloquent collection
+     */
+    public function listForUser(int $userId);
 
-    public function createReservation(array $data): array;
+    /**
+     * Create and return a Reservation model
+     */
+    public function createReservation(array $data);
 
     public function updateStatus(int $reservationId, string $status): bool;
+
+    /**
+     * Return all reservations as Eloquent collection
+     */
+    public function listAll();
+
+    public function deleteReservation(int $reservationId): bool;
 }

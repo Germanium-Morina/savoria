@@ -7,10 +7,11 @@ use App\Models\OrderItem;
 use App\Models\MenuItem;
 use App\Services\Contracts\OrderServiceInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService implements OrderServiceInterface
 {
-    public function createOrderFromCart(int $userId = null, array $customer): array
+    public function createOrderFromCart(int $userId = null, array $customer)
     {
         $cart = $customer['cart'] ?? [];
         if (empty($cart)) {
@@ -19,8 +20,39 @@ class OrderService implements OrderServiceInterface
 
         return DB::transaction(function () use ($userId, $customer, $cart) {
             $total = 0;
-            foreach ($cart as $item) {
-                $total += $item['line_total'] ?? 0;
+            $errors = [];
+            foreach ($cart as $index => $item) {
+                $menuItemId = $item['menu_item']['id'] ?? null;
+                $quantity = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+
+                if (! $menuItemId || $quantity < 1) {
+                    $errors["cart.{$index}"] = ['Invalid item or quantity'];
+                    continue;
+                }
+
+                $menuItem = MenuItem::find($menuItemId);
+                if (! $menuItem) {
+                    $errors["cart.{$index}"] = ['Menu item not found'];
+                    continue;
+                }
+
+                if ((float)$menuItem->price <= 0) {
+                    $errors["cart.{$index}"] = ['Invalid item price'];
+                    continue;
+                }
+
+                $expectedLine = $quantity * (float)$menuItem->price;
+                $submittedLine = isset($item['line_total']) ? (float)$item['line_total'] : null;
+                // if client submitted a total, ensure it matches server calculation
+                if ($submittedLine !== null && abs($submittedLine - $expectedLine) > 0.01) {
+                    $errors["cart.{$index}"] = ['Line total mismatch'];
+                }
+
+                $total += $expectedLine;
+            }
+
+            if (! empty($errors)) {
+                throw ValidationException::withMessages($errors);
             }
 
             $order = Order::create([
@@ -39,17 +71,30 @@ class OrderService implements OrderServiceInterface
                 $menuItem = MenuItem::find($ci['menu_item']['id']);
                 if (! $menuItem) continue;
 
+                $quantity = (int) ($ci['quantity'] ?? 1);
+                $expectedLine = $quantity * (float)$menuItem->price;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'menu_item_id' => $menuItem->id,
-                    'quantity' => $ci['quantity'],
+                    'quantity' => $quantity,
                     'unit_price' => $menuItem->price,
-                    'total_price' => $ci['line_total'],
+                    'total_price' => $expectedLine,
                     'special_instructions' => $ci['special_instructions'] ?? null,
                 ]);
             }
 
-            return $order->load('items.menuItem')->toArray();
+            return $order->load('items.menuItem');
         });
+    }
+
+    public function listOrders()
+    {
+        return Order::with('items.menuItem')->orderByDesc('created_at')->get();
+    }
+
+    public function getOrder(int $orderId)
+    {
+        return Order::with('items.menuItem')->find($orderId);
     }
 }

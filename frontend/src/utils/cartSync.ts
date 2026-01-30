@@ -10,7 +10,9 @@ export async function syncLocalCartToServer(invalidate?: () => Promise<unknown>)
     if (!local || local.length === 0) return;
 
     const serverRes = await fetchCart();
-    const serverItems: LocalCartItem[] = serverRes.items || [];
+    // backend returns { data: [ CartItemResource, ... ] }
+    const serverItemsRaw: any[] = serverRes?.data || [];
+    const serverItems: LocalCartItem[] = serverItemsRaw.map((it) => ({ menu_item_id: it.menu_item?.id ?? null, quantity: it.quantity ?? 0 })).filter(Boolean);
 
     const serverMap = new Map<number, number>();
     serverItems.forEach((it) => serverMap.set(it.menu_item_id, it.quantity));

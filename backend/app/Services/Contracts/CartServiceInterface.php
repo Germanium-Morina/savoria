@@ -4,11 +4,20 @@ namespace App\Services\Contracts;
 
 interface CartServiceInterface
 {
-    public function getCart(array $session): array;
+    /**
+     * Return a collection of cart items (DB-backed or session-backed)
+     */
+    public function getCart(array $session, ?int $userId = null);
 
-    public function addToCart(array &$session, int $menuItemId, int $quantity = 1): array;
+    /**
+     * Add item to cart and return the updated collection
+     */
+    public function addToCart(array &$session, int $menuItemId, int $quantity = 1, ?int $userId = null);
 
-    public function updateCart(array &$session, int $menuItemId, int $quantity): array;
+    /**
+     * Update cart item quantity and return the updated collection
+     */
+    public function updateCart(array &$session, int $menuItemId, int $quantity, ?int $userId = null);
 
-    public function clearCart(array &$session): void;
+    public function clearCart(array &$session, ?int $userId = null): void;
 }

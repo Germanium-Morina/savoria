@@ -23,7 +23,25 @@ Route::prefix('v1')->group(function () {
     Route::post('checkout', [\App\Http\Controllers\Api\OrderController::class, 'checkout']);
 
     Route::get('cart', [CartController::class, 'get']);
+    // legacy session endpoints (kept for compatibility)
     Route::post('cart/add', [CartController::class, 'add']);
     Route::post('cart/update', [CartController::class, 'update']);
     Route::post('cart/clear', [CartController::class, 'clear']);
+
+    // RESTful cart endpoints (spec)
+    Route::post('cart', [CartController::class, 'add']);
+    Route::put('cart/{id}', [CartController::class, 'update']);
+    Route::delete('cart/{id}', [CartController::class, 'remove']);
+
+    // Admin routes
+    Route::prefix('admin')->middleware(['auth:sanctum','role:admin'])->group(function () {
+        Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class)->except(['create','edit']);
+        Route::apiResource('menu-items', \App\Http\Controllers\Api\Admin\MenuItemController::class)->except(['create','edit']);
+        Route::apiResource('orders', \App\Http\Controllers\Api\Admin\OrderController::class)->only(['index','show']);
+
+        // Expose admin reservations listing and status update
+        Route::get('reservations', [\App\Http\Controllers\Api\ReservationController::class, 'adminIndex']);
+        Route::put('reservations/{id}/status', [\App\Http\Controllers\Api\ReservationController::class, 'adminUpdateStatus']);
+        Route::delete('reservations/{id}', [\App\Http\Controllers\Api\ReservationController::class, 'destroy']);
+    });
 });

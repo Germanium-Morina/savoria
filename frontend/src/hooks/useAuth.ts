@@ -8,6 +8,9 @@ export function useLogin() {
   return useMutation((payload: { email: string; password: string }) => apiLogin(payload), {
     onSuccess: (data: any) => {
       if (data?.user) dispatch(setAuth({ user: data.user }));
+      if (data?.token) {
+        try { localStorage.setItem('api_token', data.token); } catch (e) {}
+      }
     },
   });
 }
@@ -17,6 +20,9 @@ export function useRegister() {
   return useMutation((payload: any) => apiRegister(payload), {
     onSuccess: (data: any) => {
       if (data?.user) dispatch(setAuth({ user: data.user }));
+      if (data?.token) {
+        try { localStorage.setItem('api_token', data.token); } catch (e) {}
+      }
     },
   });
 }

@@ -5,14 +5,12 @@ namespace App\Services\Contracts;
 interface MenuServiceInterface
 {
     /**
-     * Return featured menu items.
-     *
-     * @return array
+     * Return featured menu items as Eloquent collection.
      */
-    public function getFeaturedItems(): array;
+    public function getFeaturedItems();
 
     /**
-     * Return menu items by category, paginated or full.
+     * Return menu items by category as Eloquent collection.
      */
-    public function listByCategory(int $categoryId = null): array;
+    public function listByCategory(int $categoryId = null);
 }
